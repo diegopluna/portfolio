@@ -1,25 +1,22 @@
-import { ChevronRight, Folder, Server, User } from "lucide-react"
+import { ChevronRight, Clock, Folder, Server, User } from "lucide-react"
 
-interface PromptProps {
-  currentDir: string
-}
 
-export default function Prompt({ currentDir }: PromptProps) {
+export default function Prompt() {
   return (
-    <div className="flex items-center text-sm mb-1">
-      <span className="bg-emerald-500 text-emerald-900 px-2 py-1 rounded-l-md flex items-center">
-        <User size={14} className="mr-1" />
-        user
+    <div className="flex items-center text-sm">
+      <span className="bg-blue-600 text-gray-100 px-2 py-1 rounded-l-md flex items-center">
+        <User size={12} className="mr-1" />
+        <span className="hidden sm:inline text-xs">user</span>
       </span>
-      <span className="bg-sky-500 text-sky-900 px-2 py-1 flex items-center">
-        <Server size={14} className="mr-1" />
-        dpeter.dev
+      <span className="bg-green-700 text-gray-100 px-2 py-1 flex items-center">
+        <Server size={12} className="mr-1" />
+        <span className="hidden sm:inline text-xs">dpeter.dev</span>
       </span>
-      <span className="bg-amber-500 text-amber-900 px-2 py-1 rounded-r-md flex items-center">
-        <Folder size={14} className="mr-1" />
-        {currentDir}
+      <span className="bg-gray-700 text-gray-100 px-2 py-1 rounded-r-md flex items-center">
+        <Clock size={12} className="mr-1" />
+        <span className="text-xs">{new Date().toLocaleTimeString()}</span>
       </span>
-      <ChevronRight size={16} className="text-emerald-500 mx-1" />
+      <ChevronRight size={14} className="text-gray-400 mx-1" />
     </div>
   )
 }
