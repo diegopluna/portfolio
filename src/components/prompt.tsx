@@ -1,4 +1,4 @@
-import { ChevronRight, Clock, Folder, Server, User } from "lucide-react"
+import { ChevronRight, Clock, Server, User } from "lucide-react"
 
 
 export default function Prompt() {
