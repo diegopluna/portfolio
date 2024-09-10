@@ -1,22 +1,46 @@
 import { useEffect, useRef, useState } from "react"
 import { commands } from "@/lib/commands"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Card, CardContent  } from "./ui/card"
 import { ScrollArea } from "./ui/scroll-area"
-import Prompt from "./prompt"
 
 export const Terminal: React.FC = () => {
   const [input, setInput] = useState("")
-  const [output, setOutput] = useState<string[]>([])
+  const [output, setOutput] = useState<{ text: string; color?: string }[]>([])
+  const [history, setHistory] = useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)  
   const [isTyping, setIsTyping] = useState(false)
   const [theme, setTheme] = useState<"light" | "dark">("dark")
+  const [matrixEffect, setMatrixEffect] = useState(false)
+  const [particleEffect, setParticleEffect] = useState(false)
+  const [glitchEffect, setGlitchEffect] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const particleCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  const typeWriter = (text: string[], index: number = 0) => {
+  const typeWriter = (text: { text: string; color?: string }[], index: number = 0, charIndex: number = 0) => {
     if (index < text.length) {
-      setIsTyping(true)
-      setOutput(prev => [...prev, text[index]])
-      setTimeout(() => typeWriter(text, index + 1), 30)
+      if (charIndex < text[index].text.length) {
+        setIsTyping(true)
+        setOutput(prev => {
+          const newOutput = [...prev]
+          if (newOutput[newOutput.length - 1]?.text === text[index].text.slice(0, charIndex)) {
+            newOutput[newOutput.length - 1] = {
+              text: text[index].text.slice(0, charIndex + 1),
+              color: text[index].color
+            }
+          } else {
+            newOutput.push({
+              text: text[index].text.slice(0, charIndex + 1),
+              color: text[index].color
+            })
+          }
+          return newOutput
+        })
+        setTimeout(() => typeWriter(text, index, charIndex + 1), 10)
+      } else {
+        setTimeout(() => typeWriter(text, index + 1, 0), 50)
+      }
     } else {
       setIsTyping(false)
     }
@@ -24,17 +48,8 @@ export const Terminal: React.FC = () => {
 
   useEffect(() => {
     const initialMessage = [
-      'Welcome to Diego Peter\'s Portfolio Terminal!',
-      'Here\'s how to use this interactive portfolio:',
-      '- Type \'help\' to see all available commands',
-      '- Use \'about\' to learn more about me',
-      '- Explore all my \'skills\' and \'projects\'', 
-      '- Get in touch with me using the \'contact\' command',
-      '- Try \'theme\' to switch between light and dark mode',
-      '',
-      'Feel free to explore and have fun!',
-      '',
-      'Type a command to get started:'
+      { text: 'Welcome to Diego Peter\'s Portfolio Console!', color: 'text-cyan-400' },
+      { text: 'Type \'help\' to see available commands.' },
     ]
     typeWriter(initialMessage)
   }, [])
@@ -55,13 +70,102 @@ export const Terminal: React.FC = () => {
     document.documentElement.classList.toggle("dark", theme === "dark")
   }, [theme])
 
+  useEffect(() => {
+    if (matrixEffect && canvasRef.current) {
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+
+      const fontSize = 14
+      const columns = canvas.width / fontSize
+
+      const drops: number[] = []
+      for (let i = 0; i < columns; i++) {
+        drops[i] = 1
+      }
+
+      const draw = () => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        ctx.fillStyle = '#0F0'
+        ctx.font = `${fontSize}px monospace`
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = String.fromCharCode(Math.random() * 128)
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize)
+
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0
+          }
+
+          drops[i]++
+        }
+      }
+
+      const interval = setInterval(draw, 33)
+
+      return () => clearInterval(interval)
+    }
+  }, [matrixEffect])
+
+
+  useEffect(() => {
+    if (particleEffect && particleCanvasRef.current) {
+      const canvas = particleCanvasRef.current
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+
+      const particles: { x: number; y: number; radius: number; dx: number; dy: number }[] = []
+      for (let i = 0; i < 50; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 3 + 1,
+          dx: (Math.random() - 0.5) * 2,
+          dy: (Math.random() - 0.5) * 2
+        })
+      }
+
+      const draw = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        ctx.fillStyle = theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'
+        for (const particle of particles) {
+          ctx.beginPath()
+          ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
+          ctx.fill()
+
+          particle.x += particle.dx
+          particle.y += particle.dy
+
+          if (particle.x < 0 || particle.x > canvas.width) particle.dx = -particle.dx
+          if (particle.y < 0 || particle.y > canvas.height) particle.dy = -particle.dy
+        }
+
+        requestAnimationFrame(draw)
+      }
+
+      draw()
+    }
+  }, [particleEffect, theme])
+
 
   const handleInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !isTyping) {
+    if (e.key === 'Enter' && !isTyping) {
       const trimmedInput = input.trim().toLowerCase()
-      const command = commands.find(cmd => cmd.name === trimmedInput)
+      const [commandName, ...args] = trimmedInput.split(' ')
+      const command = commands.find(cmd => cmd.name === commandName)
 
-      setOutput(prev => [...prev, `$ ${input}`])
+      setOutput(prev => [...prev, { text: `${getPrompt()}${input}` }])
+      setHistory(prev => [...prev, input])
+      setHistoryIndex(-1)
       setInput('')
 
       if (command) {
@@ -69,54 +173,91 @@ export const Terminal: React.FC = () => {
         if (command.name === 'clear') {
           setOutput([])
         } else if (command.name === 'theme') {
-          setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
+          setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark')
+          typeWriter(result)
+        } else if (command.name === 'matrix') {
+          setMatrixEffect(prev => !prev)
+          typeWriter(result)
+        } else if (command.name === 'particles') {
+          setParticleEffect(prev => !prev)
+          typeWriter(result)
+        } else if (command.name === 'glitch') {
+          setGlitchEffect(prev => !prev)
           typeWriter(result)
         } else {
           typeWriter(result)
         }
       } else {
         typeWriter([
-          `Command not found: ${input}`,
-          'Type \'help\' to see available commands.',
-          '',
+          { text: `Command not found: ${commandName}`, color: 'text-red-400' },
+          { text: 'Type "help" to see available commands.' },
+          { text: '' },
         ])
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (historyIndex < history.length - 1) {
+        setHistoryIndex(prev => prev + 1)
+        setInput(history[history.length - 1 - historyIndex - 1])
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (historyIndex > -1) {
+        setHistoryIndex(prev => prev - 1)
+        setInput(historyIndex === 0 ? '' : history[history.length - 1 - historyIndex + 1])
       }
     }
   }
 
+  const getPrompt = () => {
+    return `guest@dpeter.dev:~$ `
+  }
+
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
-          Terminal - portfolio@dpeter.dev
-        </CardTitle>
+    <Card className={`w-full h-full max-w-4xl mx-auto overflow-hidden ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-gray-100 border-gray-300'} relative rounded-lg shadow-lg`}>
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} p-2 flex items-center border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}`}>
         <div className="flex space-x-2">
-          <div className="size-3 bg-red-500 rounded-full"></div>
-          <div className="size-3 bg-yellow-500 rounded-full"></div>
-          <div className="size-3 bg-green-500 rounded-full"></div>
+          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[calc(100vh-12rem)] w-full" ref={scrollAreaRef}>
-          {output.map((line, index) => (
-            <div key={index} className="mb-1 font-mono">
-              {line}
-            </div>
-          ))}
-        </ScrollArea>
-        <div className="flex items-center mt-4">
-          {/* <span className="text-green-500 mr-2 font-mono">$</span> */}
-          <Prompt />
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleInput}
-            className="flex-grow bg-transparent outline-none border-none shadow-none focus:ring-0 font-mono p-0"
-            disabled={isTyping}
-            ref={inputRef}
+        <div className={`text-sm mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>jane.doe@portfolio ~ Terminal</div>
+      </div>
+      <CardContent className="p-0 relative">
+        {matrixEffect && (
+          <canvas
+            ref={canvasRef}
+            className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none"
           />
-        </div>
+        )}
+        {particleEffect && (
+          <canvas
+            ref={particleCanvasRef}
+            className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none"
+          />
+        )}
+        <ScrollArea className="h-[calc(100vh-8rem)] w-full" ref={scrollAreaRef}>
+          <div className={`p-4 font-mono text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'} ${glitchEffect ? 'glitch' : ''}`} style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+            {output.map((line, index) => (
+              <div key={index} className={`mb-1 ${line.color || ''}`}>
+                {line.text}
+              </div>
+            ))}
+            <div className="flex items-center">
+              <span className="mr-2 text-green-400">{getPrompt()}</span>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleInput}
+                className={`flex-grow bg-transparent border-none outline-none ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                disabled={isTyping}
+                ref={inputRef}
+              />
+            </div>
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   )
