@@ -221,7 +221,7 @@ export const Terminal: React.FC = () => {
           <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
         </div>
-        <div className={`text-sm mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>jane.doe@portfolio ~ Terminal</div>
+        <div className={`text-sm mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>guest@dpeter.dev ~ Terminal</div>
       </div>
       <CardContent className="p-0 relative">
         {matrixEffect && (
