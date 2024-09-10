@@ -160,7 +160,7 @@ export const Terminal: React.FC = () => {
   const handleInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isTyping) {
       const trimmedInput = input.trim().toLowerCase()
-      const [commandName, ...args] = trimmedInput.split(' ')
+      const [commandName] = trimmedInput.split(' ')
       const command = commands.find(cmd => cmd.name === commandName)
 
       setOutput(prev => [...prev, { text: `${getPrompt()}${input}` }])

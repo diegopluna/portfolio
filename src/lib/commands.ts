@@ -16,7 +16,6 @@ export const commands: Command[] = [
       { text: 'contact   - Display my contact information' },
       { text: 'clear     - Clear the terminal screen' },
       { text: 'theme     - Toggle light/dark mode' },
-      { text: 'cd        - Change directory (simulated)' },
       { text: 'matrix    - Toggle Matrix effect' },
       { text: 'particles - Toggle particle effect' },
       { text: 'glitch    - Toggle glitch effect' },
