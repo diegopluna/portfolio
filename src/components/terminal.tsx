@@ -13,6 +13,8 @@ export const Terminal: React.FC = () => {
   const [matrixEffect, setMatrixEffect] = useState(false)
   const [particleEffect, setParticleEffect] = useState(false)
   const [glitchEffect, setGlitchEffect] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [selectedSuggestion, setSelectedSuggestion] = useState(-1)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -158,7 +160,20 @@ export const Terminal: React.FC = () => {
 
 
   const handleInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isTyping) {
+    if (e.key == 'Tab') {
+      e.preventDefault()
+      if (suggestions.length > 0) {
+        if (selectedSuggestion === -1) {
+          setInput(suggestions[0])
+          setSelectedSuggestion(0)
+          setSuggestions([])
+        } else {
+          const nextIndex = (selectedSuggestion + 1) % suggestions.length
+          setInput(suggestions[nextIndex])
+          setSelectedSuggestion(nextIndex)
+        }
+      }
+    } else if (e.key === 'Enter' && !isTyping) {
       const trimmedInput = input.trim().toLowerCase()
       const [commandName] = trimmedInput.split(' ')
       const command = commands.find(cmd => cmd.name === commandName)
@@ -167,6 +182,7 @@ export const Terminal: React.FC = () => {
       setHistory(prev => [...prev, input])
       setHistoryIndex(-1)
       setInput('')
+      setSuggestions([])
 
       if (command) {
         const result = command.action()
@@ -209,6 +225,19 @@ export const Terminal: React.FC = () => {
     }
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setInput(value)
+    updateSuggestions(value)
+  }
+
+  const updateSuggestions = (value: string) => {
+    const inputLower = value.toLowerCase()
+    const newSuggestions = commands.filter(cmd => cmd.name.startsWith(inputLower)).map(cmd => cmd.name)
+    setSuggestions(newSuggestions)
+    setSelectedSuggestion(-1)
+  }
+
   const getPrompt = () => {
     return `guest@dpeter.dev:~$ `
   }
@@ -243,18 +272,36 @@ export const Terminal: React.FC = () => {
                 {line.text}
               </div>
             ))}
-            <div className="flex items-center">
-              <span className="mr-2 text-green-400">{getPrompt()}</span>
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleInput}
-                className={`flex-grow bg-transparent border-none outline-none ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}
-                style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                disabled={isTyping}
-                ref={inputRef}
-              />
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <span className="mr-2 text-green-400">{getPrompt()}</span>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={handleInput}
+                  className={`flex-grow bg-transparent border-none outline-none ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                  disabled={isTyping}
+                  ref={inputRef}
+                />
+              </div>
+              {suggestions.length > 0 && (
+                <div className={`mt-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} rounded p-1`}>
+                  {suggestions.map((suggestion, index) => (
+                    <div
+                      key={suggestion}
+                      className={`px-2 py-1 cursor-pointer ${index === selectedSuggestion ? (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300') : ''}`}
+                      onClick={() => {
+                        setInput(suggestion)
+                        setSuggestions([])
+                      }}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </ScrollArea>
